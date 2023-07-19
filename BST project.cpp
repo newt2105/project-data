@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-// define a struct node
+// Define a struct node
 struct Node {
     double latitude;
     double longitude;
@@ -12,9 +12,12 @@ struct Node {
 };
 typedef struct Node* node;
 
-// make a new node
+// Global variable for the root node
+node root = NULL;
+
+// Make a new node
 node newNode(double latitude, double longitude, int capacity) {
-    node temp = (node)malloc(sizeof(Node));
+    node temp = (node)malloc(sizeof(struct Node));
     temp->latitude = latitude;
     temp->longitude = longitude;
     temp->capacity = capacity;
@@ -22,7 +25,7 @@ node newNode(double latitude, double longitude, int capacity) {
     return temp;
 }
 
-// insert 1 node to tree
+// Insert 1 node to tree
 node insert(node root, double latitude, double longitude, int capacity) {
     if (root == NULL) {
         return newNode(latitude, longitude, capacity);
@@ -48,15 +51,15 @@ node findNextAvailableParking(node root, double latitude, double longitude) {
     if (root == NULL) {
         return NULL;
     }
-	
+
     node nearestAvailable = NULL;
-    double minDistance = -99999;
+    double minDistance = INFINITY;
 
     node current = root;
     while (current != NULL) {
         double distance = calculateDistance(latitude, longitude, current->latitude, current->longitude);
 
-        if (current->capacity > 0 && (nearestAvailable == NULL || distance < minDistance)) {
+        if ((current->capacity > 0 && (nearestAvailable == NULL || distance < minDistance)) || (current->capacity > 0 && nearestAvailable != NULL && nearestAvailable->capacity == 0)) {
             nearestAvailable = current;
             minDistance = distance;
         }
@@ -71,22 +74,63 @@ node findNextAvailableParking(node root, double latitude, double longitude) {
     return nearestAvailable;
 }
 
-// update capacity
+
+
+
+// Update capacity
 void updateCapacity(node parking) {
     parking->capacity -= 1;
 }
 
-// Hàm chính
-int main() {
-    node root = NULL;
+// Option to handle reservation
+void handleReservation(double latitude, double longitude) {
+    while (1) {
+        node nearestAvailableParking = findNextAvailableParking(root, latitude, longitude);
 
-    // insert car park 
-    root = insert(root, 1, 3, 1);
-    root = insert(root, 3, 4, 2);
-    root = insert(root, 12.345, 23.567, 10);
-    root = insert(root, 9.876, 18.234, 1);
-    root = insert(root, 11.234, 21.567, 3);
+        if (nearestAvailableParking != NULL) {
+            printf("Nearest available parking: Latitude = %.3f, Longitude = %.3f\n", nearestAvailableParking->latitude, nearestAvailableParking->longitude);
+            printf("Available capacity: %d\n", nearestAvailableParking->capacity);
 
+            if (nearestAvailableParking->capacity > 0) {
+                int confirmOption;
+                printf("Options:\n");
+                printf("1. Confirm\n");
+                printf("2. Cancel\n");
+                printf("Choose an option: ");
+                scanf("%d", &confirmOption);
+
+                if (confirmOption == 1) {
+                    updateCapacity(nearestAvailableParking);
+                    printf("Parking spot updated successfully. Capacity: %d\n", nearestAvailableParking->capacity);
+                    break;
+
+                    if (nearestAvailableParking->capacity == 0) {
+                        printf("Parking spot is now full. Finding the next available spot...\n");
+                        continue; // Allow user to input next coordinates
+                    } else {
+                        break; // Exit loop if parking is confirmed and still available
+                    }
+                } else if (confirmOption == 2) {
+                    printf("Reservation canceled.\n");
+                    break; // Exit loop if reservation is canceled
+                } else {
+                    printf("Invalid option.\n");
+                }
+            } else {
+                printf("Parking spot is already full. Finding the next available spot...\n");
+                continue; // Allow user to input next coordinates
+            }
+        } else {
+            printf("No available parking nearby.\n");
+            break; // Exit loop if no available parking nearby
+        }
+    }
+}
+
+
+
+// Main menu function
+void mainMenu() {
     int option;
     double latitude, longitude;
 
@@ -103,63 +147,32 @@ int main() {
             printf("Enter your current longitude: ");
             scanf("%lf", &longitude);
 
-            node nearestAvailableParking = findNextAvailableParking(root, latitude, longitude);
-
-            if (nearestAvailableParking != NULL) {
-                printf("Nearest available parking: Latitude = %.3f, Longitude = %.3f\n", nearestAvailableParking->latitude, nearestAvailableParking->longitude);
-                printf("Available capacity: %d\n", nearestAvailableParking->capacity);
-                printf("\n");
-
-                int confirmOption;
-                printf("Options:\n");
-                printf("1. Confirm\n");
-                printf("2. Cancel\n");
-                printf("Choose an option: ");
-                scanf("%d", &confirmOption);
-
-                if (confirmOption == 1) {
-                    if (nearestAvailableParking->capacity == 1) {
-                        nearestAvailableParking->capacity -= 1;
-                        printf("Parking spot updated successfully. Capacity: 0\n");
-                        printf("\n");
-                    } else if (nearestAvailableParking->capacity > 1) {
-                        nearestAvailableParking->capacity -= 1;
-                        printf("Parking spot updated successfully. Capacity: %d\n", nearestAvailableParking->capacity);
-                        printf("\n");
-                    } else {
-                        printf("Parking spot is full. Finding the next available spot...\n");
-                        printf("\n");
-                        nearestAvailableParking = findNextAvailableParking(root, latitude, longitude);
-
-                        if (nearestAvailableParking == NULL) {
-                            printf("No available parking nearby.\n");
-                            printf("\n");
-                        } else {
-                            printf("Nearest available parking: Latitude = %.3f, Longitude = %.3f\n", nearestAvailableParking->latitude, nearestAvailableParking->longitude);
-                            printf("Available capacity: %d\n", nearestAvailableParking->capacity);
-                            printf("\n");
-                        }
-                    }
-                } else if (confirmOption == 2) {
-                    printf("Reservation canceled.\n");
-                    printf("\n");
-                } else {
-                    printf("Invalid option.\n");
-                    printf("\n");
-                }
-            } else {
-                printf("No available parking nearby.\n");
-                printf("\n");
-            }
+            handleReservation(latitude, longitude);
+            printf("\n");
         } else if (option == 2) {
             printf("Exiting...\n");
-            printf("\n");
             break;
         } else {
             printf("Invalid option.\n");
             printf("\n");
         }
     }
+}
 
+// Welcome screen function
+void welcomeScreen() {
+    // Insert car parks 
+	root = insert(root, 1, 3, 0);
+    root = insert(root, 3, 4, 0);
+    root = insert(root, 12.345, 23.567, 10);
+    root = insert(root, 9.876, 18.234, 1);
+    root = insert(root, 11.234, 21.567, 3);
+
+    mainMenu();
+}
+
+// Main function
+int main() {
+    welcomeScreen();
     return 0;
 }
