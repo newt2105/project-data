@@ -7,34 +7,36 @@ struct Node {
     double latitude;
     double longitude;
     int capacity;
+    double distance; 
     struct Node* left;
     struct Node* right;
 };
 typedef struct Node* node;
 
-// Global variable for the root node
-node root = NULL;
-
 // Make a new node
-node newNode(double latitude, double longitude, int capacity) {
+node newNode(double latitude, double longitude, int capacity, double distance) {
     node temp = (node)malloc(sizeof(struct Node));
     temp->latitude = latitude;
     temp->longitude = longitude;
     temp->capacity = capacity;
+    temp->distance = distance;
     temp->left = temp->right = NULL;
     return temp;
 }
 
+// Global variable for the root node
+node root = NULL;
+
 // Insert 1 node to tree
-node insert(node root, double latitude, double longitude, int capacity) {
+node insert(node root, double latitude, double longitude, int capacity, double distance) {
     if (root == NULL) {
-        return newNode(latitude, longitude, capacity);
+        return newNode(latitude, longitude, capacity, distance);
     }
 
-    if (latitude < root->latitude) {
-        root->left = insert(root->left, latitude, longitude, capacity);
-    } else if (latitude > root->latitude) {
-        root->right = insert(root->right, latitude, longitude, capacity);
+    if (distance < root->distance) {
+        root->left = insert(root->left, latitude, longitude, capacity, distance);
+    } else {
+        root->right = insert(root->right, latitude, longitude, capacity, distance);
     }
 
     return root;
@@ -46,19 +48,49 @@ double calculateDistance(double x1, double y1, double x2, double y2) {
     return distance;
 }
 
-// Find the nearest car park with available slot
-node findNextAvailableParking(node root, double latitude, double longitude, node* nearestAvailable) {
-    if (root != NULL) {
-        findNextAvailableParking(root->left, latitude, longitude, nearestAvailable);
-
-        double distance = calculateDistance(latitude, longitude, root->latitude, root->longitude);
-
-        if (root->capacity > 0 && (*nearestAvailable == NULL || distance < calculateDistance(latitude, longitude, (*nearestAvailable)->latitude, (*nearestAvailable)->longitude))) {
-            *nearestAvailable = root;
-        }
-
-        findNextAvailableParking(root->right, latitude, longitude, nearestAvailable);
+// update distance when 1 car input coordinates
+node updateDistances(node root, double latitude, double longitude) {
+    if (root == NULL) {
+        return NULL;
     }
+
+    double distance = calculateDistance(latitude, longitude, root->latitude, root->longitude);
+    root->distance = distance;
+
+    root->left = updateDistances(root->left, latitude, longitude);
+    root->right = updateDistances(root->right, latitude, longitude);
+
+    return root;
+}
+
+// Find the nearest car park with available slot
+node findNextAvailableParking(node root, double latitude, double longitude) {
+    if (root == NULL) {
+        return NULL;
+    }
+	
+	//define a nearest node = null
+    node nearestAvailable = NULL;
+    double minDistance = -1;
+
+    node current = root;
+    while (current != NULL) {
+        double distance = calculateDistance(latitude, longitude, current->latitude, current->longitude);
+
+        if (current->capacity > 0 && (nearestAvailable == NULL || distance < minDistance)) {
+            nearestAvailable = current;
+            minDistance = distance;
+        }
+        
+		// inorder travesal to find next car park
+        if (distance < current->distance) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+
+    return nearestAvailable;
 }
 
 // Update capacity
@@ -68,8 +100,10 @@ void updateCapacity(node parking) {
 
 // Option to handle reservation
 void handleReservation(double latitude, double longitude) {
-    node nearestAvailableParking = NULL;
-    findNextAvailableParking(root, latitude, longitude, &nearestAvailableParking);
+    root = updateDistances(root, latitude, longitude); // update the distance before insert car park into BST
+    root = insert(root, latitude, longitude, 0, 0);
+
+    node nearestAvailableParking = findNextAvailableParking(root, latitude, longitude);
 
     if (nearestAvailableParking != NULL) {
         printf("Nearest available parking: Latitude = %.3f, Longitude = %.3f\n", nearestAvailableParking->latitude, nearestAvailableParking->longitude);
@@ -92,14 +126,13 @@ void handleReservation(double latitude, double longitude) {
                 printf("Invalid option.\n");
             }
         } else {
-            printf("Parking spot is already full. Finding the next available spot...\n");
+            printf("Parking spot is now full. Finding the next available spot...\n");
         }
     } else {
         printf("No available parking nearby.\n");
     }
 }
 
-// Main menu function
 void mainMenu() {
     int option;
     double latitude, longitude;
@@ -129,19 +162,17 @@ void mainMenu() {
     }
 }
 
-// Welcome screen function
 void welcomeScreen() {
-    // Insert car parks
-    root = insert(root, 1, 3, 1);
-    root = insert(root, 3, 4, 2);
-    root = insert(root, 12.345, 23.567, 10);
-    root = insert(root, 9.876, 18.234, 1);
-    root = insert(root, 11.234, 21.567, 3);
+	// a list of available car park
+    root = insert(root, 1, 3, 0, 0);
+    root = insert(root, 3, 4, 2, 0);
+    root = insert(root, 12.345, 23.567, 10, 0);
+    root = insert(root, 9.876, 18.234, 0, 0);
+    root = insert(root, 11.234, 21.567, 3, 0);
 
     mainMenu();
 }
 
-// Main function
 int main() {
     welcomeScreen();
     return 0;
