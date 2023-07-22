@@ -2,87 +2,97 @@
 #include <stdlib.h>
 #include <math.h>
 
-// Define a struct node
+// Khai báo cấu trúc Node đại diện cho một bãi đỗ xe
 struct Node {
-    double latitude;
-    double longitude;
-    int capacity;
-    double distance; 
-    struct Node* left;
-    struct Node* right;
+    double latitude; // Tọa độ vĩ độ của bãi đỗ xe
+    double longitude; // Tọa độ kinh độ của bãi đỗ xe
+    int capacity; // Số chỗ đỗ còn trống trong bãi đỗ xe
+    double distance; // Khoảng cách từ xe đến bãi đỗ xe
+    struct Node* left; // Con trỏ trỏ tới cây con bên trái của nút hiện tại
+    struct Node* right; // Con trỏ trỏ tới cây con bên phải của nút hiện tại
 };
 typedef struct Node* node;
 
-// Make a new node
-node newNode(double latitude, double longitude, int capacity, double distance) {
+// Hàm tạo một nút mới với thông tin tọa độ, sức chứa và khoảng cách
+node newNode(double latitude, double longitude, int capacity) {
     node temp = (node)malloc(sizeof(struct Node));
     temp->latitude = latitude;
     temp->longitude = longitude;
     temp->capacity = capacity;
-    temp->distance = distance;
-    temp->left = temp->right = NULL;
+    temp->distance = 0; // Khởi tạo khoảng cách ban đầu là 0
+    temp->left = temp->right = NULL; // Khởi tạo cây con là NULL
     return temp;
 }
 
-// Global variable for the root node
+// Con trỏ root đại diện cho cây tìm kiếm nhị phân chứa thông tin các bãi đỗ xe
 node root = NULL;
 
-// Insert 1 node to tree
-node insert(node root, double latitude, double longitude, int capacity, double distance) {
-    if (root == NULL) {
-        return newNode(latitude, longitude, capacity, distance);
-    }
 
-    if (distance < root->distance) {
-        root->left = insert(root->left, latitude, longitude, capacity, distance);
-    } else {
-        root->right = insert(root->right, latitude, longitude, capacity, distance);
-    }
-
-    return root;
-}
-
-// Compute distance according to coordinates
+// Hàm tính khoảng cách giữa hai điểm dựa trên tọa độ địa lý
 double calculateDistance(double x1, double y1, double x2, double y2) {
     double distance = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
     return distance;
 }
 
-// update distance when 1 car input coordinates
+
+// Hàm chèn một bãi đỗ xe mới vào cây tìm kiếm nhị phân dựa vào khoảng cách
+node insert(node root, double latitude, double longitude, int capacity) {
+    if (root == NULL) {
+        return newNode(latitude, longitude, capacity);
+    }
+
+    // Tính khoảng cách từ bãi đỗ xe mới tới nút hiện tại trong cây
+    double distance = calculateDistance(latitude, longitude, root->latitude, root->longitude);
+
+    if (distance < root->distance) {
+        root->left = insert(root->left, latitude, longitude, capacity);
+    } else {
+        root->right = insert(root->right, latitude, longitude, capacity);
+    }
+
+    return root;
+}
+
+
+// Hàm cập nhật lại khoảng cách từ xe đến các bãi đỗ xe trong cây
 node updateDistances(node root, double latitude, double longitude) {
     if (root == NULL) {
         return NULL;
     }
 
+    // Tính khoảng cách từ xe đến bãi đỗ xe hiện tại
     double distance = calculateDistance(latitude, longitude, root->latitude, root->longitude);
     root->distance = distance;
 
+    // Cập nhật lại khoảng cách cho cây con bên trái và cây con bên phải của nút hiện tại
     root->left = updateDistances(root->left, latitude, longitude);
     root->right = updateDistances(root->right, latitude, longitude);
 
     return root;
 }
 
-// Find the nearest car park with available slot
+// Tìm bãi đỗ xe gần nhất và có chỗ trống để đặt chỗ
 node findNextAvailableParking(node root, double latitude, double longitude) {
     if (root == NULL) {
         return NULL;
     }
-	
-	//define a nearest node = null
+
+    // Khởi tạo thông tin bãi đỗ xe gần nhất và khoảng cách tới nó
     node nearestAvailable = NULL;
     double minDistance = -1;
 
     node current = root;
     while (current != NULL) {
+        // Tính khoảng cách từ xe đến bãi đỗ xe hiện tại
         double distance = calculateDistance(latitude, longitude, current->latitude, current->longitude);
 
+        // Nếu bãi đỗ xe có chỗ trống và khoảng cách nhỏ hơn khoảng cách hiện tại, cập nhật thông tin
         if (current->capacity > 0 && (nearestAvailable == NULL || distance < minDistance)) {
             nearestAvailable = current;
             minDistance = distance;
         }
-        
-		// inorder travesal to find next car park
+
+        // Tiếp tục duyệt cây bên trái nếu khoảng cách nhỏ hơn khoảng cách hiện tại, ngược lại duyệt cây bên phải
         if (distance < current->distance) {
             current = current->left;
         } else {
@@ -93,19 +103,23 @@ node findNextAvailableParking(node root, double latitude, double longitude) {
     return nearestAvailable;
 }
 
-// Update capacity
+// Hàm cập nhật lại sức chứa của bãi đỗ xe sau khi đặt chỗ thành công
 void updateCapacity(node parking) {
     parking->capacity -= 1;
 }
 
-// Option to handle reservation
+// Hàm xử lý đặt chỗ bãi đỗ xe dựa vào tọa độ của xe
 void handleReservation(double latitude, double longitude) {
-    root = updateDistances(root, latitude, longitude); // update the distance before insert car park into BST
-    root = insert(root, latitude, longitude, 0, 0);
+    // Cập nhật lại khoảng cách từ xe đến các bãi đỗ xe trong cây
+    root = updateDistances(root, latitude, longitude);
+    // Chèn bãi đỗ xe mới vào cây dựa vào khoảng cách đã cập nhật
+    root = insert(root, latitude, longitude, 0);
 
+    // Tìm bãi đỗ xe gần nhất và có chỗ trống để đặt chỗ
     node nearestAvailableParking = findNextAvailableParking(root, latitude, longitude);
 
     if (nearestAvailableParking != NULL) {
+        // In ra thông tin bãi đỗ xe gần nhất và số chỗ trống còn lại
         printf("Nearest available parking: Latitude = %.3f, Longitude = %.3f\n", nearestAvailableParking->latitude, nearestAvailableParking->longitude);
         printf("Available capacity: %d\n", nearestAvailableParking->capacity);
 
@@ -118,6 +132,7 @@ void handleReservation(double latitude, double longitude) {
             scanf("%d", &confirmOption);
 
             if (confirmOption == 1) {
+                // Nếu chọn xác nhận, cập nhật lại sức chứa của bãi đỗ xe
                 updateCapacity(nearestAvailableParking);
                 printf("Parking spot updated successfully. Capacity: %d\n", nearestAvailableParking->capacity);
             } else if (confirmOption == 2) {
@@ -133,6 +148,7 @@ void handleReservation(double latitude, double longitude) {
     }
 }
 
+// Hàm hiển thị menu chính cho người dùng
 void mainMenu() {
     int option;
     double latitude, longitude;
@@ -150,6 +166,7 @@ void mainMenu() {
             printf("Enter your current longitude: ");
             scanf("%lf", &longitude);
 
+            // Xử lý đặt chỗ bãi đỗ xe dựa vào tọa độ của xe
             handleReservation(latitude, longitude);
             printf("\n");
         } else if (option == 2) {
@@ -162,18 +179,20 @@ void mainMenu() {
     }
 }
 
+// Hàm hiển thị màn hình chào mừng và khởi tạo các bãi đỗ xe ban đầu
 void welcomeScreen() {
-	// a list of available car park
-    root = insert(root, 1, 3, 0, 0);
-    root = insert(root, 3, 4, 2, 0);
-    root = insert(root, 12.345, 23.567, 10, 0);
-    root = insert(root, 9.876, 18.234, 0, 0);
-    root = insert(root, 11.234, 21.567, 3, 0);
+    root = insert(root, 1, 3, 0);
+    root = insert(root, 3, 4, 2);
+    root = insert(root, 12.345, 23.567, 10);
+    root = insert(root, 9.876, 18.234, 0);
+    root = insert(root, 11.234, 21.567, 3);
 
+    // Hiển thị menu chính cho người dùng
     mainMenu();
 }
 
 int main() {
+    // Hiển thị màn hình chào mừng và khởi tạo các bãi đỗ xe ban đầu
     welcomeScreen();
     return 0;
 }
