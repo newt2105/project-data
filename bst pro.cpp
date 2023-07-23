@@ -6,13 +6,13 @@ struct Coordinate {
     double x;
     double y;
 };
-typedef Coordinate coordinate;
+typedef struct Coordinate coordinate;
 
 struct ParkingLot {
     struct Coordinate location;
     int capacity;
 };
-typedef ParkingLot parkinglot;
+typedef struct ParkingLot parkinglot;
 
 struct Node {
     parkinglot data;
@@ -21,6 +21,7 @@ struct Node {
 };
 
 typedef struct Node* node;
+node root = NULL;
 
 // Hàm tính khoảng cách từ xe tới 1 bãi đỗ
 double calculateDistance(coordinate carLocation, coordinate parkingLotLocation) {
@@ -37,7 +38,7 @@ node createNode(parkinglot parkingLot) {
 }
 
 // Hàm chèn một bãi đỗ vào cây BST theo thứ tự khoảng cách tăng dần
-node insertByDistance(node root, parkinglot parkingLot,coordinate carLocation) {
+node insertByDistance(node root, parkinglot parkingLot, coordinate carLocation) {
     if (root == NULL) {
         return createNode(parkingLot);
     }
@@ -54,28 +55,21 @@ node insertByDistance(node root, parkinglot parkingLot,coordinate carLocation) {
     return root;
 }
 
-// Hàm duyệt cây BST theo thứ tự inorder và tìm bãi đỗ gần nhất và còn chỗ
-void findNearestInorder(node root, coordinate carLocation, double* minDistance, node* nearestParkingLot) {
-    if (root == NULL) {
-        return;
-    }
-
-    findNearestInorder(root->left, carLocation, minDistance, nearestParkingLot);
-
-    double distance = calculateDistance(carLocation, root->data.location);
-    if (distance < *minDistance && root->data.capacity > 0) {
-        *minDistance = distance;
-        *nearestParkingLot = root;
-    }
-
-    findNearestInorder(root->right, carLocation, minDistance, nearestParkingLot);
-}
-
-// Hàm tìm bãi đỗ gần nhất
+// Hàm tìm bãi đỗ gần nhất và còn chỗ
 node findNearest(node root, coordinate carLocation) {
-    double minDistance = INFINITY;
+   
     node nearestParkingLot = NULL;
-    findNearestInorder(root, carLocation, &minDistance, &nearestParkingLot);
+
+    if (root != NULL) {
+        
+        if (root->data.capacity > 0) {
+            
+            nearestParkingLot = root;
+        }
+		findNearest(root->left, carLocation);
+		findNearest(root->right, carLocation);
+    }
+
     return nearestParkingLot;
 }
 
@@ -104,47 +98,49 @@ void processOption() {
     }
 
     while (1) {
-        printf("Option:\n1. Nhap toa do xe\n2. Thoat\n");
+        printf("Option:\n1. Input your coordinate\n2. Exit\n");
         scanf("%d", &option);
 
         if (option == 1) {
-            printf("Nhap toa do xe (x y): ");
+            printf("\nYour coordinate (x y): ");
             scanf("%lf %lf", &carLocation.x, &carLocation.y);
 
             node nearestParkingLot = findNearest(root, carLocation);
             if (nearestParkingLot != NULL) {
-                printf("Bai do gan nhat co toa do: (%.2lf, %.2lf) va con %d cho trong\n",
+                printf("The neareat has coordinate: (%.2lf, %.2lf) and has %d slot.\n",
                        nearestParkingLot->data.location.x, nearestParkingLot->data.location.y,
                        nearestParkingLot->data.capacity);
 
-                printf("Xac nhan? (1: Co / 0: Khong)? ");
+                printf("Confirm? (1: YES / 0: NO)? ");
                 int choose;
                 scanf("%d", &choose);
                 if (choose == 1) {
                     if (nearestParkingLot->data.capacity > 0) {
                         nearestParkingLot->data.capacity--;
-                        printf("Thanh cong.\n");
+                        printf("Success!\n");
                     } else {
-                        printf("Bai do da day, vui long tim bai do khac!\n");
+                        printf("Car park is full. Please check another!\n");
                     }
                 } else if (choose == 0) {
                     printf(".\n");
                 } else {
-                    printf("Lua chon khong hop le!\n");
+                    printf("Ivalid option!\n");
                 }
             } else {
-                printf("Khong tim thay bai do gan nhat hoac tat ca cac bai do da day!\n");
+                printf("Not found!\n");
             }
         } else if (option == 2) {
+        	printf("Exiting.....");
             break;
         } else {
-            printf("Lua chon khong hop le! Vui long chon lai.\n");
+            printf("Ivalid option.\n");
         }
     }
 
-
+    // Giải phóng bộ nhớ của cây BST
+    // Chú ý: Hàm giải phóng bộ nhớ được thêm vào để tránh memory leak
+    free(root);
 }
-
 
 int main() {
     processOption();
