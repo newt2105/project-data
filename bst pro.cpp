@@ -27,12 +27,19 @@ node root = NULL;
 double Distance(coordinate carLocation, coordinate parkingLotLocation) {
     return sqrt(pow(carLocation.x - parkingLotLocation.x, 2) + pow(carLocation.y - parkingLotLocation.y, 2));
 }
-
+// Hàm tạo một node mới
+node createNode(parkinglot parkingLot) {
+    node newNode = (node)malloc(sizeof(struct Node));
+    newNode->data = parkingLot;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    return newNode;
+}
 
 // Hàm chèn một bãi đỗ vào cây BST theo thứ tự khoảng cách tăng dần
 node insertByDistance(node root, parkinglot parkingLot, coordinate carLocation) {
     if (root == NULL) {
-        return root;
+        return createNode(parkingLot);
     }
 
     double distanceNewLot = Distance(carLocation, parkingLot.location);
