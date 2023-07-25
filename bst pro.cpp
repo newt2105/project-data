@@ -20,53 +20,53 @@ struct Node {
     struct Node* right;
 };
 
-typedef struct Node* node;
-node root = NULL;
+typedef struct Node* tree;
+tree t = NULL;
 
 // Hàm tính khoảng cách từ xe tới 1 bãi đỗ
 double Distance(coordinate carLocation, coordinate parkingLotLocation) {
     return sqrt(pow(carLocation.x - parkingLotLocation.x, 2) + pow(carLocation.y - parkingLotLocation.y, 2));
 }
 // Hàm tạo một node mới
-node createNode(parkinglot parkingLot) {
-    node newNode = (node)malloc(sizeof(struct Node));
+tree createNode(parkinglot parkingLot) {
+    tree newNode = (tree)malloc(sizeof(struct Node));
     newNode->data = parkingLot;
     newNode->left = NULL;
     newNode->right = NULL;
     return newNode;
-}
+}	
 
 // Hàm chèn một bãi đỗ vào cây BST theo thứ tự khoảng cách tăng dần
-node insertByDistance(node root, parkinglot parkingLot, coordinate carLocation) {
-    if (root == NULL) {
+tree insertByDistance(tree t, parkinglot parkingLot, coordinate carLocation) {
+    if (t == NULL) {
         return createNode(parkingLot);
     }
 
     double distanceNewLot = Distance(carLocation, parkingLot.location);
-    double distanceCurrentLot = Distance(carLocation, root->data.location);
+    double distanceCurrentLot = Distance(carLocation, t->data.location);
 
     if (distanceNewLot < distanceCurrentLot) {
-        root->left = insertByDistance(root->left, parkingLot, carLocation);
+        t->left = insertByDistance(t->left, parkingLot, carLocation);
     } else {
-        root->right = insertByDistance(root->right, parkingLot, carLocation);
+        t->right = insertByDistance(t->right, parkingLot, carLocation);
     }
 
-    return root;
+    return t;
 }
 
 // Hàm tìm bãi đỗ gần nhất và còn chỗ
-node findNearest(node root, coordinate carLocation) {
+tree findNearest(tree t, coordinate carLocation) {
    
-    node nearest = NULL;
+    tree nearest = NULL;
 
-    if (root != NULL) {
+    if (t != NULL) {
         
-        if (root->data.capacity > 0) {
+        if (t->data.capacity > 0) {
             
-            nearest = root;
+            nearest = t;
         }
-		findNearest(root->left, carLocation);
-		findNearest(root->right, carLocation);
+		findNearest(t->left, carLocation);
+		findNearest(t->right, carLocation);
     }
 
     return nearest;
@@ -82,11 +82,11 @@ void processOption() {
     // khởi tại bãi đỗ
     carpark[num ].location.x = 1;
     carpark[num ].location.y = 2;
-    carpark[num ].capacity = 3;
+    carpark[num ].capacity = 0;
     num ++;
 
-    carpark[num ].location.x = 1;
-    carpark[num ].location.y = 2;
+    carpark[num ].location.x = 9;
+    carpark[num ].location.y = 9;
     carpark[num ].capacity = 3;
     num ++;
 
@@ -103,10 +103,10 @@ void processOption() {
             printf("\nYour coordinate (x y): ");
             scanf("%lf %lf", &carLocation.x, &carLocation.y);
             for (int i = 0; i < num; i++) {
-	        root = insertByDistance(root, carpark[i], carLocation);
- 		   }
+	        t = insertByDistance(t, carpark[i], carLocation);
+ 		   		}
 
-            node nearest = findNearest(root, carLocation);
+            tree nearest = findNearest(t, carLocation);
             if (nearest != NULL) {
                 printf("The neareat has coordinate: (%.2lf, %.2lf) and has %d slot.\n",
                        nearest->data.location.x, nearest->data.location.y,
