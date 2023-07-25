@@ -24,27 +24,19 @@ typedef struct Node* node;
 node root = NULL;
 
 // Hàm tính khoảng cách từ xe tới 1 bãi đỗ
-double calculateDistance(coordinate carLocation, coordinate parkingLotLocation) {
+double Distance(coordinate carLocation, coordinate parkingLotLocation) {
     return sqrt(pow(carLocation.x - parkingLotLocation.x, 2) + pow(carLocation.y - parkingLotLocation.y, 2));
 }
 
-// Hàm tạo một node mới
-node createNode(parkinglot parkingLot) {
-    node newNode = (node)malloc(sizeof(struct Node));
-    newNode->data = parkingLot;
-    newNode->left = NULL;
-    newNode->right = NULL;
-    return newNode;
-}
 
 // Hàm chèn một bãi đỗ vào cây BST theo thứ tự khoảng cách tăng dần
 node insertByDistance(node root, parkinglot parkingLot, coordinate carLocation) {
     if (root == NULL) {
-        return createNode(parkingLot);
+        return root;
     }
 
-    double distanceNewLot = calculateDistance(carLocation, parkingLot.location);
-    double distanceCurrentLot = calculateDistance(carLocation, root->data.location);
+    double distanceNewLot = Distance(carLocation, parkingLot.location);
+    double distanceCurrentLot = Distance(carLocation, root->data.location);
 
     if (distanceNewLot < distanceCurrentLot) {
         root->left = insertByDistance(root->left, parkingLot, carLocation);
@@ -58,65 +50,67 @@ node insertByDistance(node root, parkinglot parkingLot, coordinate carLocation) 
 // Hàm tìm bãi đỗ gần nhất và còn chỗ
 node findNearest(node root, coordinate carLocation) {
    
-    node nearestParkingLot = NULL;
+    node nearest = NULL;
 
     if (root != NULL) {
         
         if (root->data.capacity > 0) {
             
-            nearestParkingLot = root;
+            nearest = root;
         }
 		findNearest(root->left, carLocation);
 		findNearest(root->right, carLocation);
     }
 
-    return nearestParkingLot;
+    return nearest;
 }
 
 // Hàm xử lý các option
 void processOption() {
-    struct ParkingLot availableParkingLots[100]; // Giả sử số lượng tối đa bãi đỗ là 100
-    int numAvailableParkingLots = 0; // Số lượng bãi đỗ có sẵn hiện tại
-    coordinate carLocation;
+    struct ParkingLot carpark[100]; // Giả sử số lượng tối đa bãi đỗ là 100
+    int num = 0; // Số lượng bãi đỗ có sẵn 
+    
     int option;
 
-    // Khởi tạo 3 bãi đỗ có sẵn
-    availableParkingLots[numAvailableParkingLots].location.x = 1;
-    availableParkingLots[numAvailableParkingLots].location.y = 2;
-    availableParkingLots[numAvailableParkingLots].capacity = 3;
-    numAvailableParkingLots++;
+    // khởi tại bãi đỗ
+    carpark[num ].location.x = 1;
+    carpark[num ].location.y = 2;
+    carpark[num ].capacity = 3;
+    num ++;
 
-    availableParkingLots[numAvailableParkingLots].location.x = 2;
-    availableParkingLots[numAvailableParkingLots].location.y = 9;
-    availableParkingLots[numAvailableParkingLots].capacity = 3;
-    numAvailableParkingLots++;
+    carpark[num ].location.x = 1;
+    carpark[num ].location.y = 2;
+    carpark[num ].capacity = 3;
+    num ++;
 
-    // Tạo BST và thêm bãi đỗ có sẵn vào BST
-    node root = NULL;
-    for (int i = 0; i < numAvailableParkingLots; i++) {
-        root = insertByDistance(root, availableParkingLots[i], carLocation);
-    }
+
+ 
+
 
     while (1) {
+    	coordinate carLocation;
         printf("Option:\n1. Input your coordinate\n2. Exit\n");
         scanf("%d", &option);
 
         if (option == 1) {
             printf("\nYour coordinate (x y): ");
             scanf("%lf %lf", &carLocation.x, &carLocation.y);
+            for (int i = 0; i < num; i++) {
+	        root = insertByDistance(root, carpark[i], carLocation);
+ 		   }
 
-            node nearestParkingLot = findNearest(root, carLocation);
-            if (nearestParkingLot != NULL) {
+            node nearest = findNearest(root, carLocation);
+            if (nearest != NULL) {
                 printf("The neareat has coordinate: (%.2lf, %.2lf) and has %d slot.\n",
-                       nearestParkingLot->data.location.x, nearestParkingLot->data.location.y,
-                       nearestParkingLot->data.capacity);
+                       nearest->data.location.x, nearest->data.location.y,
+                       nearest->data.capacity);
 
                 printf("Confirm? (1: YES / 0: NO)? ");
                 int choose;
                 scanf("%d", &choose);
                 if (choose == 1) {
-                    if (nearestParkingLot->data.capacity > 0) {
-                        nearestParkingLot->data.capacity--;
+                    if (nearest->data.capacity > 0) {
+                        nearest->data.capacity--;
                         printf("Success!\n");
                     } else {
                         printf("Car park is full. Please check another!\n");
@@ -137,9 +131,7 @@ void processOption() {
         }
     }
 
-    // Giải phóng bộ nhớ của cây BST
-    // Chú ý: Hàm giải phóng bộ nhớ được thêm vào để tránh memory leak
-    free(root);
+
 }
 
 int main() {
