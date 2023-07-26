@@ -101,11 +101,7 @@ void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpar
         return;
     updateCapacity(t->left, chosenLocation, carpark, num);
 
-    // Kiểm tra nếu tọa độ của node tương ứng với bãi đỗ được chọn từ bên ngoài
-    if (t->data.location.x == chosenLocation.x && t->data.location.y == chosenLocation.y) {
-        if (t->data.capacity > 0) {
-            t->data.capacity--;
-            printf("Success!\n");
+
             
             // Tìm index của bãi đỗ trong carpark và trừ capacity
             for (int i = 0; i < num; i++) {
@@ -114,10 +110,9 @@ void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpar
                     break;
                 }
             }
-        } else {
-            printf("Car park is full. Please check another!\n");
-        }
-    }
+
+        
+    
 
     updateCapacity(t->right, chosenLocation, carpark, num);
 }
