@@ -78,25 +78,27 @@ tree findLeftMostNodeWithCapacity(tree t) {
 
     return result;
 }
-void Free( tree t )
-{
-    if ( t == NULL )
-        return;
-    Free( t->left );
-    Free( t->right );
-    free( t );
+
+void updateCapacity(parkinglot* parkingLot) {
+    parkingLot->capacity -= 1;
 }
 
 
-
+void deleteTree(tree t) {
+    if (t == NULL)
+        return;
+    deleteTree(t->left);
+    deleteTree(t->right);
+    free(t);
+}
 
 void processOption() {
     struct ParkingLot carpark[100]; // Giả sử số lượng tối đa bãi đỗ là 100
     int num = 0; // Số lượng bãi đỗ có sẵn 
-    
+
     int option;
 
-    // khởi tại bãi đỗ
+    // Khởi tạo bãi đỗ ban đầu
     carpark[num].location.x = 2;
     carpark[num].location.y = 2;
     carpark[num].capacity = 0;
@@ -111,12 +113,11 @@ void processOption() {
     carpark[num].location.y = 1;
     carpark[num].capacity = 3;
     num++;
-    
+
     carpark[num].location.x = 3;
     carpark[num].location.y = 3;
     carpark[num].capacity = 3;
     num++;
- 
 
     while (1) {
         coordinate carLocation;
@@ -126,6 +127,7 @@ void processOption() {
         if (option == 1) {
             printf("\nYour coordinate (x y): ");
             scanf("%lf %lf", &carLocation.x, &carLocation.y);
+
             for (int i = 0; i < num; i++) {
                 t = insertByDistance(t, carpark[i], carLocation);
             }
@@ -138,7 +140,7 @@ void processOption() {
             }
 
             if (nearest != NULL) {
-                printf("The nearest parking lot with available slots: Coordinate: (%.2lf, %.2lf), Capacity: %d\n", 
+                printf("The nearest parking lot with available slots: Coordinate: (%.2lf, %.2lf), Capacity: %d\n",
                        nearest->data.location.x, nearest->data.location.y, nearest->data.capacity);
 
                 printf("Confirm? (1: YES / 0: NO)? ");
@@ -146,12 +148,11 @@ void processOption() {
                 scanf("%d", &choose);
                 if (choose == 1) {
                     if (nearest->data.capacity > 0) {
-                        nearest->data.capacity--;
+                        updateCapacity(&(nearest->data));
                         printf("Success!\n");
                     } else {
                         printf("Car park is full. Please check another!\n");
                     }
-                 
                 } else if (choose == 0) {
                     printf(".\n");
                 } else {
@@ -160,6 +161,9 @@ void processOption() {
             } else {
                 printf("No available parking lot found!\n");
             }
+            
+            deleteTree(t); // Xóa cây cũ sau khi xe đã chọn
+            t = NULL; // Thiết lập t lại thành NULL để tránh trỏ đến địa chỉ đã được giải phóng
         } else if (option == 2) {
             printf("Exiting.....");
             break;
@@ -167,9 +171,7 @@ void processOption() {
             printf("Invalid option.\n");
         }
     }
-       Free(t);
 }
-
 
 int main() {
     processOption();
