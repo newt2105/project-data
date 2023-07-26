@@ -54,25 +54,42 @@ tree insertByDistance(tree t, parkinglot parkingLot, coordinate carLocation) {
     return t;
 }
 
-// Hàm tìm bãi đỗ gần nhất và còn chỗ
-tree findNearest(tree t, coordinate carLocation) {
-   
-    tree nearest = NULL;
-
+void inorderTraversal(tree t) {
     if (t != NULL) {
-        
-        if (t->data.capacity > 0) {
-            
-            nearest = t;
-        }
-		findNearest(t->left, carLocation);
-		findNearest(t->right, carLocation);
+        inorderTraversal(t->left);
+        printf("Coordinate: (%.2lf, %.2lf), Capacity: %d\n", t->data.location.x, t->data.location.y, t->data.capacity);
+        inorderTraversal(t->right);
     }
-
-    return nearest;
 }
 
-// Hàm xử lý các option
+tree findLeftMostNodeWithCapacity(tree t) {
+    if (t == NULL) {
+        return NULL;
+    }
+
+    tree result = NULL;
+    while (t != NULL) {
+        if (t->data.capacity > 0) {
+            result = t;
+            break;
+        }
+        t = t->left;
+    }
+
+    return result;
+}
+void Free( tree t )
+{
+    if ( t == NULL )
+        return;
+    Free( t->left );
+    Free( t->right );
+    free( t );
+}
+
+
+
+
 void processOption() {
     struct ParkingLot carpark[100]; // Giả sử số lượng tối đa bãi đỗ là 100
     int num = 0; // Số lượng bãi đỗ có sẵn 
@@ -80,22 +97,29 @@ void processOption() {
     int option;
 
     // khởi tại bãi đỗ
-    carpark[num ].location.x = 1;
-    carpark[num ].location.y = 2;
-    carpark[num ].capacity = 0;
-    num ++;
+    carpark[num].location.x = 2;
+    carpark[num].location.y = 2;
+    carpark[num].capacity = 0;
+    num++;
 
-    carpark[num ].location.x = 9;
-    carpark[num ].location.y = 9;
-    carpark[num ].capacity = 3;
-    num ++;
+    carpark[num].location.x = 9;
+    carpark[num].location.y = 9;
+    carpark[num].capacity = 3;
+    num++;
 
-
+    carpark[num].location.x = 1;
+    carpark[num].location.y = 1;
+    carpark[num].capacity = 3;
+    num++;
+    
+    carpark[num].location.x = 3;
+    carpark[num].location.y = 3;
+    carpark[num].capacity = 3;
+    num++;
  
 
-
     while (1) {
-    	coordinate carLocation;
+        coordinate carLocation;
         printf("Option:\n1. Input your coordinate\n2. Exit\n");
         scanf("%d", &option);
 
@@ -103,14 +127,19 @@ void processOption() {
             printf("\nYour coordinate (x y): ");
             scanf("%lf %lf", &carLocation.x, &carLocation.y);
             for (int i = 0; i < num; i++) {
-	        t = insertByDistance(t, carpark[i], carLocation);
- 		   		}
+                t = insertByDistance(t, carpark[i], carLocation);
+            }
 
-            tree nearest = findNearest(t, carLocation);
+            inorderTraversal(t);
+
+            tree nearest = findLeftMostNodeWithCapacity(t);
+            while (nearest != NULL && nearest->data.capacity == 0) {
+                nearest = findLeftMostNodeWithCapacity(nearest->right);
+            }
+
             if (nearest != NULL) {
-                printf("The neareat has coordinate: (%.2lf, %.2lf) and has %d slot.\n",
-                       nearest->data.location.x, nearest->data.location.y,
-                       nearest->data.capacity);
+                printf("The nearest parking lot with available slots: Coordinate: (%.2lf, %.2lf), Capacity: %d\n", 
+                       nearest->data.location.x, nearest->data.location.y, nearest->data.capacity);
 
                 printf("Confirm? (1: YES / 0: NO)? ");
                 int choose;
@@ -122,24 +151,25 @@ void processOption() {
                     } else {
                         printf("Car park is full. Please check another!\n");
                     }
+                 
                 } else if (choose == 0) {
                     printf(".\n");
                 } else {
-                    printf("Ivalid option!\n");
+                    printf("Invalid option!\n");
                 }
             } else {
-                printf("Not found!\n");
+                printf("No available parking lot found!\n");
             }
         } else if (option == 2) {
-        	printf("Exiting.....");
+            printf("Exiting.....");
             break;
         } else {
-            printf("Ivalid option.\n");
+            printf("Invalid option.\n");
         }
     }
-
-
+       Free(t);
 }
+
 
 int main() {
     processOption();
