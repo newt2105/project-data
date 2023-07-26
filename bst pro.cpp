@@ -78,17 +78,23 @@ tree findLeftMostNodeWithCapacity(tree t) {
         return NULL;
     }
 
-    tree result = NULL;
-    while (t != NULL) {
-        if (t->data.capacity > 0) {
-            result = t;
-            break;
-        }
-        t = t->left;
+    // First, try to find the leftmost node with capacity in the left subtree
+    tree leftResult = findLeftMostNodeWithCapacity(t->left);
+
+    // If the left subtree contains a node with capacity, return it
+    if (leftResult != NULL && leftResult->data.capacity > 0) {
+        return leftResult;
     }
 
-    return result;
+    // If the current node has capacity, return it
+    if (t->data.capacity > 0) {
+        return t;
+    }
+
+    // Otherwise, check the right subtree
+    return findLeftMostNodeWithCapacity(t->right);
 }
+
 
 void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpark, int num) {
     if (t == NULL)
@@ -133,22 +139,22 @@ void processOption() {
     // Khởi tạo bãi đỗ ban đầu
     carpark[num].location.x = 2;
     carpark[num].location.y = 2;
-    carpark[num].capacity = 0;
+    carpark[num].capacity = 1;
     num++;
 
     carpark[num].location.x = 9;
     carpark[num].location.y = 9;
-    carpark[num].capacity = 3;
+    carpark[num].capacity = 6;
     num++;
 
     carpark[num].location.x = 1;
     carpark[num].location.y = 1;
-    carpark[num].capacity = 3;
+    carpark[num].capacity = 1;
     num++;
 
     carpark[num].location.x = 3;
     carpark[num].location.y = 3;
-    carpark[num].capacity = 3;
+    carpark[num].capacity = 1;
     num++;
 
     while (1) {
