@@ -27,6 +27,7 @@ tree t = NULL;
 double Distance(coordinate carLocation, coordinate parkingLotLocation) {
     return sqrt(pow(carLocation.x - parkingLotLocation.x, 2) + pow(carLocation.y - parkingLotLocation.y, 2));
 }
+
 // Hàm tạo một node mới
 tree createNode(parkinglot parkingLot) {
     tree newNode = (tree)malloc(sizeof(struct Node));
@@ -79,10 +80,31 @@ tree findLeftMostNodeWithCapacity(tree t) {
     return result;
 }
 
-void updateCapacity(parkinglot* parkingLot) {
-    parkingLot->capacity -= 1;
-}
+void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpark, int num) {
+    if (t == NULL)
+        return;
+    updateCapacity(t->left, chosenLocation, carpark, num);
 
+    // Kiểm tra nếu tọa độ của node tương ứng với bãi đỗ được chọn từ bên ngoài
+    if (t->data.location.x == chosenLocation.x && t->data.location.y == chosenLocation.y) {
+        if (t->data.capacity > 0) {
+            t->data.capacity--;
+            printf("Success!\n");
+            
+            // Tìm index của bãi đỗ trong carpark và trừ capacity
+            for (int i = 0; i < num; i++) {
+                if (carpark[i].location.x == chosenLocation.x && carpark[i].location.y == chosenLocation.y) {
+                    carpark[i].capacity--;
+                    break;
+                }
+            }
+        } else {
+            printf("Car park is full. Please check another!\n");
+        }
+    }
+
+    updateCapacity(t->right, chosenLocation, carpark, num);
+}
 
 void deleteTree(tree t) {
     if (t == NULL)
@@ -147,12 +169,7 @@ void processOption() {
                 int choose;
                 scanf("%d", &choose);
                 if (choose == 1) {
-                    if (nearest->data.capacity > 0) {
-                        updateCapacity(&(nearest->data));
-                        printf("Success!\n");
-                    } else {
-                        printf("Car park is full. Please check another!\n");
-                    }
+                    updateCapacity(t, nearest->data.location, carpark, num);
                 } else if (choose == 0) {
                     printf(".\n");
                 } else {
