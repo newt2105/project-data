@@ -73,26 +73,17 @@ void inorderTraversal(tree t) {
     }
 }
 
-tree findLeftMostNodeWithCapacity(tree t) {
+tree findLeftMostNode(tree t) {
     if (t == NULL) {
         return NULL;
     }
 
-    // First, try to find the leftmost node with capacity in the left subtree
-    tree leftResult = findLeftMostNodeWithCapacity(t->left);
-
-    // If the left subtree contains a node with capacity, return it
-    if (leftResult != NULL && leftResult->data.capacity > 0) {
-        return leftResult;
+    // Keep going left until there's no left child left
+    while (t->left != NULL) {
+        t = t->left;
     }
 
-    // If the current node has capacity, return it
-    if (t->data.capacity > 0) {
-        return t;
-    }
-
-    // Otherwise, check the right subtree
-    return findLeftMostNodeWithCapacity(t->right);
+    return t;
 }
 
 
@@ -103,16 +94,13 @@ void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpar
 
 
             
-            // Tìm index của bãi đỗ trong carpark và trừ capacity
-            for (int i = 0; i < num; i++) {
-                if (carpark[i].location.x == chosenLocation.x && carpark[i].location.y == chosenLocation.y) {
-                    carpark[i].capacity--;
-                    break;
-                }
-            }
-
-        
-    
+    // Tìm index của bãi đỗ trong carpark và trừ capacity
+    for (int i = 0; i < num; i++) {
+        if (carpark[i].location.x == chosenLocation.x && carpark[i].location.y == chosenLocation.y) {
+            carpark[i].capacity--;
+            break;
+        }
+    }
 
     updateCapacity(t->right, chosenLocation, carpark, num);
 }
@@ -167,10 +155,8 @@ void processOption() {
 
             inorderTraversal(t);
 
-            tree nearest = findLeftMostNodeWithCapacity(t);
-            while (nearest != NULL && nearest->data.capacity == 0) {
-                nearest = findLeftMostNodeWithCapacity(nearest->right);
-            }
+            tree nearest = findLeftMostNode(t);
+
 
             if (nearest != NULL) {
                 printf("The nearest parking lot with available slots: Coordinate: (%.2lf, %.2lf), Capacity: %d\n",
