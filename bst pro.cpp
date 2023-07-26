@@ -37,23 +37,33 @@ tree createNode(parkinglot parkingLot) {
     return newNode;
 }	
 
-// Hàm chèn một bãi đỗ vào cây BST theo thứ tự khoảng cách tăng dần
 tree insertByDistance(tree t, parkinglot parkingLot, coordinate carLocation) {
     if (t == NULL) {
-        return createNode(parkingLot);
+        if (parkingLot.capacity > 0) {
+            return createNode(parkingLot);
+        }
+        return NULL; // Không chèn nếu capacity = 0
     }
 
     double distanceNewLot = Distance(carLocation, parkingLot.location);
     double distanceCurrentLot = Distance(carLocation, t->data.location);
 
     if (distanceNewLot < distanceCurrentLot) {
-        t->left = insertByDistance(t->left, parkingLot, carLocation);
+        // Chèn vào cây bên trái nếu khoảng cách mới nhỏ hơn
+        if (parkingLot.capacity > 0) {
+            t->left = insertByDistance(t->left, parkingLot, carLocation);
+        }
     } else {
-        t->right = insertByDistance(t->right, parkingLot, carLocation);
+        // Chèn vào cây bên phải nếu khoảng cách mới lớn hơn hoặc bằng
+        if (parkingLot.capacity > 0) {
+            t->right = insertByDistance(t->right, parkingLot, carLocation);
+        }
     }
 
     return t;
 }
+
+
 
 void inorderTraversal(tree t) {
     if (t != NULL) {
