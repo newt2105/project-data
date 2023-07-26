@@ -2,19 +2,19 @@
 #include <stdlib.h>
 #include <math.h>
 
-struct Coordinate {
+struct Coordinate { // Coordinate of car and carpark
     double x;
     double y;
 };
 typedef struct Coordinate coordinate;
 
-struct ParkingLot {
+struct ParkingLot { // define of car park
     struct Coordinate location;
     int capacity;
 };
 typedef struct ParkingLot parkinglot;
 
-struct Node {
+struct Node { // define of node in BST
     parkinglot data;
     struct Node* left;
     struct Node* right;
@@ -23,7 +23,7 @@ struct Node {
 typedef struct Node* tree;
 tree t = NULL;
 
-// Hàm tính khoảng cách từ xe tới 1 bãi đỗ
+// Calculate distance from car to car park
 double Distance(coordinate carLocation, coordinate parkingLotLocation) {
     return sqrt(pow(carLocation.x - parkingLotLocation.x, 2) + pow(carLocation.y - parkingLotLocation.y, 2));
 }
@@ -37,24 +37,25 @@ tree createNode(parkinglot parkingLot) {
     return newNode;
 }	
 
+// Insert depend on distance from car to car park
 tree insertByDistance(tree t, parkinglot parkingLot, coordinate carLocation) {
     if (t == NULL) {
         if (parkingLot.capacity > 0) {
             return createNode(parkingLot);
         }
-        return NULL; // Không chèn nếu capacity = 0
+        return NULL; // if capacity = 0, not insert
     }
 
     double distanceNewLot = Distance(carLocation, parkingLot.location);
     double distanceCurrentLot = Distance(carLocation, t->data.location);
 
     if (distanceNewLot < distanceCurrentLot) {
-        // Chèn vào cây bên trái nếu khoảng cách mới nhỏ hơn
+        // insert to the left 
         if (parkingLot.capacity > 0) {
             t->left = insertByDistance(t->left, parkingLot, carLocation);
         }
     } else {
-        // Chèn vào cây bên phải nếu khoảng cách mới lớn hơn hoặc bằng
+        //  insert to the right 
         if (parkingLot.capacity > 0) {
             t->right = insertByDistance(t->right, parkingLot, carLocation);
         }
@@ -65,7 +66,7 @@ tree insertByDistance(tree t, parkinglot parkingLot, coordinate carLocation) {
 
 
 
-void inorderTraversal(tree t) {
+void inorderTraversal(tree t) { // test function
     if (t != NULL) {
         inorderTraversal(t->left);
         printf("Coordinate: (%.2lf, %.2lf), Capacity: %d\n", t->data.location.x, t->data.location.y, t->data.capacity);
@@ -73,12 +74,13 @@ void inorderTraversal(tree t) {
     }
 }
 
+// Find nearest car park
 tree findLeftMostNode(tree t) {
     if (t == NULL) {
         return NULL;
     }
 
-    // Keep going left until there's no left child left
+    // find left most child
     while (t->left != NULL) {
         t = t->left;
     }
@@ -86,19 +88,19 @@ tree findLeftMostNode(tree t) {
     return t;
 }
 
-
+// update capacity
 void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpark, int num) {
     if (t == NULL)
         return;
     updateCapacity(t->left, chosenLocation, carpark, num);
 
-    // Kiểm tra nếu tọa độ của node tương ứng với bãi đỗ được chọn từ bên ngoài
+    
     if (t->data.location.x == chosenLocation.x && t->data.location.y == chosenLocation.y) {
         if (t->data.capacity > 0) {
             t->data.capacity--;
-            printf("Success!\n");
+            printf("\n");
             
-            // Tìm index của bãi đỗ trong carpark và trừ capacity
+            // find index of the car park in array and remove 1 capacity
             for (int i = 0; i < num; i++) {
                 if (carpark[i].location.x == chosenLocation.x && carpark[i].location.y == chosenLocation.y) {
                     carpark[i].capacity--;
@@ -106,13 +108,14 @@ void updateCapacity(tree t, coordinate chosenLocation, struct ParkingLot* carpar
                 }
             }
         } else {
-            printf("Car park is full. Please check another!\n");
+            printf("\n");
         }
     }
 
     updateCapacity(t->right, chosenLocation, carpark, num);
 }
 
+// delete old tree before make a new one
 void deleteTree(tree t) {
     if (t == NULL)
         return;
@@ -122,12 +125,12 @@ void deleteTree(tree t) {
 }
 
 void processOption() {
-    struct ParkingLot carpark[100]; // Giả sử số lượng tối đa bãi đỗ là 100
-    int num = 0; // Số lượng bãi đỗ có sẵn 
+    struct ParkingLot carpark[100]; // array of car park
+    int num = 0; // number of carpark
 
     int option;
 
-    // Khởi tạo bãi đỗ ban đầu
+    // initial car park
     carpark[num].location.x = 2;
     carpark[num].location.y = 2;
     carpark[num].capacity = 1;
